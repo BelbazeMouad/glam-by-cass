@@ -3,6 +3,12 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ONE place controls the currency for the whole payment flow.
+// Set NEXT_PUBLIC_CURRENCY in your env to 'usd' or 'eur' (defaults to eur).
+// This MUST match the currency your Stripe account is set to, or Stripe
+// will convert/behave oddly and the charged amount won't match what's shown.
+const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY || 'eur').toLowerCase();
+
 export async function POST(req) {
   try {
     const { serviceId, date, time, name, email, phone } = await req.json();
@@ -23,6 +29,14 @@ export async function POST(req) {
       return Response.json({ error: 'Service not found' }, { status: 404 });
     }
 
+    // The deposit, as a clean number. This is exactly what will be charged.
+    const deposit = Number(service.deposit);
+    if (!Number.isFinite(deposit) || deposit <= 0) {
+      return Response.json({ error: 'This service has no valid deposit set.' }, { status: 400 });
+    }
+    const price = Number(service.price) || 0;
+    const balance = Math.max(price - deposit, 0);
+
     // Guard: is the date already unavailable?
     const { data: taken } = await admin
       .from('public_unavailable_dates').select('date').eq('date', date);
@@ -30,7 +44,9 @@ export async function POST(req) {
       return Response.json({ error: 'That date is no longer available' }, { status: 409 });
     }
 
-    // Create a pending booking first
+    // Create a pending booking first.
+    // Record the exact amount + currency we're about to charge, so the
+    // dashboard always shows the truth (not a mismatched number).
     const { data: booking, error: bErr } = await admin.from('bookings').insert({
       client_name: name,
       client_email: email,
@@ -39,7 +55,7 @@ export async function POST(req) {
       service_name: service.name,
       booking_date: date,
       booking_time: time,
-      deposit_amount: service.deposit,
+      deposit_amount: deposit,
       status: 'pending',
       paid: false,
     }).select().single();
@@ -49,19 +65,21 @@ export async function POST(req) {
 
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-    // Create the Stripe Checkout session for the DEPOSIT
+    // Stripe wants the amount in the smallest currency unit (cents).
+    const unitAmount = Math.round(deposit * 100);
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       customer_email: email || undefined,
       line_items: [{
         price_data: {
-          currency: 'eur',
+          currency: CURRENCY,
           product_data: {
             name: `${service.name} — Deposit`,
-            description: `Booking deposit for ${date}${time ? ' at ' + time : ''}. Balance (€${(service.price - service.deposit).toFixed(2)}) paid on the day.`,
+            description: `Booking deposit for ${date}${time ? ' at ' + time : ''}. Balance (${balance.toFixed(2)}) paid on the day.`,
           },
-          unit_amount: Math.round(Number(service.deposit) * 100),
+          unit_amount: unitAmount,
         },
         quantity: 1,
       }],
@@ -70,7 +88,6 @@ export async function POST(req) {
       cancel_url: `${site}/#book`,
     });
 
-    // Save the session id on the booking
     await admin.from('bookings').update({ stripe_session: session.id }).eq('id', booking.id);
 
     return Response.json({ url: session.url });
