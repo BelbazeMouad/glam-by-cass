@@ -111,6 +111,108 @@
 
 
   /* ---------- 10. ADMIN DASHBOARD ---------- */
+  /* Cass lives on her phone — this makes the whole panel comfortable
+     to use one-handed: bigger tap targets, stacked layout, no
+     side-scrolling tables, and tabs that scroll horizontally. */
+
+  .dash-shell{padding:0}
+  .dash-top{padding:14px 16px;flex-wrap:wrap;gap:10px}
+  .dash-top-actions{gap:8px}
+  .dash-main{padding:16px 14px 90px}
+
+  /* Tabs — horizontal scroll strip instead of squeezed/wrapped row */
+  .dash-tabs{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;
+    padding:4px 2px 12px;margin:0 -14px 14px;padding-left:14px;padding-right:14px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .dash-tabs::-webkit-scrollbar{display:none}
+  .dash-tabs button{flex:0 0 auto;padding:10px 16px;font-size:.8rem;white-space:nowrap;border-radius:100px}
+  .tab-badge{position:relative;top:-1px}
+
+  .panel-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .panel-head h3{font-size:1.2rem}
+  .panel-head .btn{width:100%;justify-content:center}
+
+  /* Overview stat cards — stack, full width, roomy */
+  .stat-row{grid-template-columns:1fr 1fr;gap:10px}
+  .stat{padding:16px 14px}
+  .stat .num{font-size:1.5rem}
+  .chart-grid{grid-template-columns:1fr;gap:14px}
+  .chart-card{padding:14px}
+  .upcoming .up-row{flex-wrap:wrap;padding:12px 4px}
+
+  /* Tables -> card rows so nothing needs horizontal scrolling */
+  .tbl-wrap{overflow-x:visible}
+  .tbl-wrap table, .tbl-wrap thead, .tbl-wrap tbody, .tbl-wrap tr, .tbl-wrap td{display:block;width:100%}
+  .tbl-wrap thead{display:none}
+  .tbl-wrap tr{
+    margin-bottom:12px;padding:14px 15px;border-radius:14px;
+    background:var(--glass);border:1px solid var(--glass-brd);
+  }
+  .tbl-wrap td{padding:5px 0;border:none;font-size:.86rem}
+  .tbl-wrap td:empty{display:none}
+  .row-actions{flex-wrap:wrap;gap:8px;margin-top:8px}
+  .row-actions .mini,.row-actions a.mini{flex:1;min-width:84px;justify-content:center;text-align:center;padding:9px 10px}
+
+  /* Bigger, thumb-friendly buttons everywhere in the panel */
+  .mini{padding:9px 14px;font-size:.8rem;border-radius:9px}
+  .btn{padding:13px 20px;font-size:.88rem}
+  .fld{padding:13px 15px;font-size:.92rem}
+  input, select, textarea{font-size:16px} /* stop iOS auto-zoom on focus */
+
+  /* Services & Prices editor cards */
+  .svc-editor{grid-template-columns:1fr}
+  .svc-edit-card{padding:16px}
+  .svc-edit-row{grid-template-columns:1fr;gap:10px}
+  .svc-edit-actions{flex-wrap:wrap}
+  .svc-edit-actions .btn,.svc-edit-actions .mini{flex:1;min-width:100px}
+
+  /* Days off */
+  .doff-layout{grid-template-columns:1fr;gap:18px}
+  .doff-cal-card{padding:16px}
+  .doff-day{font-size:.86rem}
+  .doff-chip{padding:12px 13px;flex-wrap:wrap}
+  .doff-chip-edit{flex-wrap:wrap;width:100%}
+  .doff-chip-edit .fld{width:100%}
+
+  /* Reels uploader + cards */
+  .reel-uploader{padding:16px}
+  .reel-form-row{grid-template-columns:1fr;gap:10px}
+  .reel-manage{grid-template-columns:1fr}
+  .reel-mcard{padding:12px}
+  .reel-edit-row{grid-template-columns:1fr}
+  .reel-edit-actions{flex-wrap:wrap}
+  .reel-edit-actions .btn{flex:1;min-width:100px}
+
+  /* Messages + conversation panel — full-width, easy to thumb-scroll */
+  .convo-head{padding:14px}
+  .convo-who{font-size:.92rem}
+  .convo-body{padding:14px;max-height:50vh}
+  .bubble{max-width:88%}
+  .convo-controls{flex-wrap:wrap;gap:8px;padding:12px}
+  .convo-reply{width:100%}
+  .msg-actions{flex-wrap:wrap;gap:8px}
+  .bell-drop{width:min(92vw,360px);right:-8px}
+
+  /* Emails tab cards -> single column, roomy */
+  .mail-grid-cards{grid-template-columns:1fr;gap:14px}
+  .mail-card{padding:18px}
+  .mail-grid{grid-template-columns:1fr;gap:20px}
+  .mail-toolbar{flex-wrap:wrap}
+  .mail-preview-wrap{position:static}
+  .fe-row{flex-wrap:wrap}
+  .fe-row .btn{flex:1;min-width:100px}
+
+  /* Booking email/message popup — comfortable on a small screen */
+  .msg-modal{max-width:94vw;padding:20px 18px;max-height:88vh;overflow-y:auto}
+  .msg-modal-head{flex-wrap:wrap}
+
+  /* Contact Info form */
+  .settings-form{max-width:100%}
+
+  /* Login screen */
+  .login-card{padding:32px 22px;width:92vw}
 
 
 }
