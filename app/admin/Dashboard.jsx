@@ -1001,6 +1001,7 @@ const MAIL_META = {
   declined:        { to: 'client', ico: '○' },
   cancelledClient: { to: 'client', ico: '×' },
   messageReply:    { to: 'client', ico: '❝' },
+  ownerNewMessage: { to: 'owner',  ico: '💌' },
   ownerNewBooking: { to: 'owner',  ico: '★' },
   ownerCancelled:  { to: 'owner',  ico: '!' },
 };

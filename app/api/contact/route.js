@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, buildTemplate } from '@/lib/email';
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,12 +29,8 @@ export async function POST(req) {
     const { data: s } = await admin.from('settings').select('email').eq('id', 1).single();
     if (s?.email) ownerEmail = s.email;
     if (ownerEmail) {
-      await sendEmail({
-        to: ownerEmail,
-        subject: `New message from ${name.trim()}`,
-        title: 'You have a new message 💌',
-        body: `<strong>${name.trim()}</strong> just sent you a message through your website.<br><br>Log in to your dashboard to read it and reply.`,
-      });
+      const t = await buildTemplate('ownerNewMessage', { name: name.trim(), email: email.trim() });
+      await sendEmail({ to: ownerEmail, ...t });
     }
 
     return Response.json({ ok: true });

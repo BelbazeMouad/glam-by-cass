@@ -507,8 +507,36 @@
 .msg-actions{display:flex;gap:6px;align-items:center}
 
 /* ============ COMPACT BOOKING PAGE (fit one screen) ============ */
+/* ===== Desktop: tighter top spacing on all subpages so the header
+   doesn't push content down into a scroll ===== */
+@media(min-width:761px){
+  #page-about .wrap, #page-services .wrap, #page-portfolio .wrap{
+    padding-top:80px!important;padding-bottom:28px!important;
+  }
+  #page-about .sec-head, #page-services .sec-head, #page-portfolio .sec-head{margin-bottom:20px}
+  /* keep lighter pages centered but never taller than the screen */
+  #page-services, #page-portfolio, #page-about{min-height:100vh}
+}
+
 #page-book .wrap{padding-top:84px;padding-bottom:24px}
 #page-contact .wrap{padding-top:74px!important;padding-bottom:30px!important}
+
+/* ===== Desktop: fit booking page in one screen (no page scroll) ===== */
+@media(min-width:761px){
+  #page-book{min-height:100vh;height:100vh;overflow:hidden}
+  #page-book .wrap{padding-top:78px;padding-bottom:18px;display:flex;flex-direction:column;height:100vh;max-width:1240px}
+  #page-book .sec-head{margin-bottom:12px;flex-shrink:0}
+  #page-book .book-grid{flex:1;min-height:0;grid-template-columns:0.85fr 1.15fr;gap:28px;align-items:stretch}
+  /* services column: bigger, fills height, own scroll only if truly needed */
+  #page-book .svc{display:flex;flex-direction:column;overflow:auto}
+  #page-book .svc-row{padding:18px 22px}
+  #page-book .svc-row h4{font-size:1.28rem}
+  #page-book .svc-row .sub{font-size:.84rem}
+  #page-book .svc-row .price{font-size:1.25rem}
+  /* calendar column: fills height, scrolls internally if the form is long */
+  #page-book .booking{display:flex;flex-direction:column;overflow:auto;padding:22px 24px}
+  #page-book .booking h3{font-size:1.35rem}
+}
 #page-contact .sec-head{margin-bottom:22px}
 #page-book .sec-head{margin-bottom:16px}
 #page-book .sec-head h2{font-size:clamp(1.6rem,3.6vw,2.4rem)}
