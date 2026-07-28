@@ -101,6 +101,13 @@
 
 
   /* ---------- 9. FOOTER ---------- */
+  /* Fixed copyright bar — stays pinned to the bottom while scrolling.
+     Compact and centered so it reads cleanly on a narrow screen. */
+  .site-footer{padding:9px 16px 10px;background:rgba(8,5,6,.82)!important;backdrop-filter:blur(16px)!important}
+  .site-footer p{font-size:.68rem}
+  .site-footer .footer-fine{font-size:.56rem;line-height:1.45;opacity:.5;max-width:340px}
+  /* room so content isn't hidden behind it */
+  .page:not(#page-home) .wrap{padding-bottom:82px!important}
 
 
   /* ---------- 10. ADMIN DASHBOARD ---------- */
