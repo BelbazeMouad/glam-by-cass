@@ -925,3 +925,24 @@ a.ci-row:hover .v{filter:brightness(1.15)}
 .doff-chip-edit .fld{flex:1;min-width:0}
 .doff-chip-x{width:30px;height:30px;border-radius:50%;border:1px solid var(--glass-brd);background:var(--surface);color:var(--ink-soft);cursor:pointer;font-size:1.1rem;line-height:1;flex-shrink:0;transition:.2s;display:flex;align-items:center;justify-content:center}
 .doff-chip-x:hover{border-color:var(--crimson-bright,#c0394d);color:var(--crimson-bright,#c0394d);background:rgba(165,40,61,.1)}
+
+/* ============================================================
+   BOOKINGS — WhatsApp (disabled state) + Email popup
+   ============================================================ */
+.mini.wa.disabled{opacity:.35;cursor:not-allowed;pointer-events:none;filter:grayscale(.6)}
+.mini.email-btn{background:rgba(224,169,74,.1);border-color:rgba(224,169,74,.35);color:var(--gold)}
+.mini.email-btn:hover{background:rgba(224,169,74,.18);border-color:var(--gold)}
+
+.msg-modal-backdrop{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:pop .2s var(--ease)}
+.msg-modal{width:100%;max-width:460px;border-radius:20px;padding:26px 26px 24px;
+  background:var(--solid);border:1px solid var(--glass-brd);box-shadow:0 30px 80px -20px rgba(0,0,0,.8)}
+.msg-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.msg-modal-head strong{font-family:var(--f-body);font-weight:600;font-size:1.05rem}
+.msg-modal-head .muted{font-size:.78rem;margin-top:2px}
+.msg-modal-x{width:30px;height:30px;border-radius:50%;border:1px solid var(--glass-brd);background:var(--surface);
+  color:var(--ink-soft);font-size:1.2rem;cursor:pointer;flex-shrink:0;transition:.2s;display:flex;align-items:center;justify-content:center}
+.msg-modal-x:hover{border-color:var(--gold);color:var(--gold)}
+.msg-modal-body{width:100%;font-family:var(--f-body);font-size:.9rem;line-height:1.6;resize:vertical}
+.msg-modal-actions{display:flex;gap:10px;margin-top:16px}
+.msg-modal-sent{display:flex;flex-direction:column;align-items:center;padding:26px 10px;gap:8px}
