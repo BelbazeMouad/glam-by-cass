@@ -4,10 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ONE place controls the currency for the whole payment flow.
-// Set NEXT_PUBLIC_CURRENCY in your env to 'usd' or 'eur' (defaults to eur).
+// Set NEXT_PUBLIC_CURRENCY in your env to 'usd' or 'eur' (defaults to usd).
 // This MUST match the currency your Stripe account is set to, or Stripe
 // will convert/behave oddly and the charged amount won't match what's shown.
-const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY || 'eur').toLowerCase();
+const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY || 'usd').toLowerCase();
 
 export async function POST(req) {
   try {

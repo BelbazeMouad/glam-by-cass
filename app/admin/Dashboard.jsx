@@ -208,7 +208,7 @@ function Overview({ supabase }) {
 
   const cards = [
     ['Total Bookings', stats.total, '✦'],
-    ['Deposits Collected', '€' + stats.revenue.toFixed(0), '€'],
+    ['Deposits Collected', '$' + stats.revenue.toFixed(0), '$'],
     ['Confirmed', stats.confirmed, '✓'],
     ['Awaiting Review', stats.pending, '◔'],
   ];
@@ -251,7 +251,7 @@ function Overview({ supabase }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(224,169,74,.1)" />
               <XAxis dataKey="month" stroke="#a39d8c" fontSize={12} />
               <YAxis stroke="#a39d8c" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#140d0c', border: '1px solid rgba(224,169,74,.3)', borderRadius: 8, color: '#e9e2d2' }} formatter={v => '€' + v} />
+              <Tooltip contentStyle={{ background: '#140d0c', border: '1px solid rgba(224,169,74,.3)', borderRadius: 8, color: '#e9e2d2' }} formatter={v => '$' + v} />
               <Line type="monotone" dataKey="revenue" stroke={CRIMSON} strokeWidth={2.5} dot={{ fill: GOLD, r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -339,7 +339,7 @@ function Bookings({ supabase }) {
                 <td>{b.client_name}<div className="muted" style={{ fontSize: '.75rem' }}>{b.client_email}</div></td>
                 <td>{b.service_name}</td>
                 <td>{b.booking_date}<div className="muted" style={{ fontSize: '.75rem' }}>{b.booking_time}</div></td>
-                <td><span className={'tag ' + (b.paid ? 'paid' : 'pending')}>{b.paid ? `€${b.deposit_amount}` : 'Unpaid'}</span></td>
+                <td><span className={'tag ' + (b.paid ? 'paid' : 'pending')}>{b.paid ? `$${b.deposit_amount}` : 'Unpaid'}</span></td>
                 <td><span className={'tag ' + b.status}>{b.status}</span></td>
                 <td>
                   <div className="row-actions">
@@ -385,8 +385,8 @@ function Services({ supabase }) {
             <input className="fld" value={r.name} onChange={e => upd(r.id, 'name', e.target.value)} placeholder="Service name" />
             <textarea className="fld" rows={2} value={r.description || ''} onChange={e => upd(r.id, 'description', e.target.value)} placeholder="Description" />
             <div className="svc-edit-row">
-              <label>Price €<input className="fld sm" type="number" value={r.price} onChange={e => upd(r.id, 'price', e.target.value)} /></label>
-              <label>Deposit €<input className="fld sm" type="number" value={r.deposit} onChange={e => upd(r.id, 'deposit', e.target.value)} /></label>
+              <label>Price $<input className="fld sm" type="number" value={r.price} onChange={e => upd(r.id, 'price', e.target.value)} /></label>
+              <label>Deposit $<input className="fld sm" type="number" value={r.deposit} onChange={e => upd(r.id, 'deposit', e.target.value)} /></label>
               <label>Mins<input className="fld sm" type="number" value={r.duration_min} onChange={e => upd(r.id, 'duration_min', e.target.value)} /></label>
             </div>
             <div className="svc-edit-actions">
@@ -438,72 +438,68 @@ function DaysOff({ supabase }) {
   return (
     <div>
       <div className="panel-head"><h3>Days Off</h3></div>
-      <p className="muted">Block a day so clients can't book it. Booked + paid days block automatically.</p>
+      <p className="muted">Tap any date to block it — clients can't book blocked days. Booked &amp; paid days block automatically.</p>
 
-      <div className="dayoff-add pop">
-        <button className="btn ghost" onClick={() => setShowPicker(!showPicker)}>
-          {showPicker ? 'Close calendar' : 'Pick a day off'}
-        </button>
-
-        {showPicker && (
-          <div className="doff-picker">
-            <div className="doff-cal-head">
-              <button onClick={() => setPickerMonth(addMonths(pickerMonth, -1))}>‹</button>
-              <strong>{format(pickerMonth, 'MMMM yyyy')}</strong>
-              <button onClick={() => setPickerMonth(addMonths(pickerMonth, 1))}>›</button>
-            </div>
-            <div className="doff-cal">
-              {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} className="doff-dow">{d}</div>)}
-              {Array.from({ length: blanks }).map((_,i) => <div key={'b'+i} />)}
-              {monthDays.map(d => {
-                const key = format(d, 'yyyy-MM-dd');
-                const isPast = isBefore(d, today);
-                const isOff = blockedDates.has(key);
-                return (
-                  <div key={key}
-                    className={'doff-day' + (isPast ? ' past' : '') + (isOff ? ' blocked' : ' avail')}
-                    onClick={() => !isPast && toggleDay(d)}>
-                    {format(d, 'd')}
-                  </div>
-                );
-              })}
-            </div>
-            <p className="muted" style={{textAlign:'center',marginTop:8,fontSize:'.76rem'}}>Click a date to block or unblock it</p>
+      <div className="doff-layout">
+        <div className="doff-cal-card">
+          <div className="doff-cal-head">
+            <button className="doff-nav" onClick={() => setPickerMonth(addMonths(pickerMonth, -1))}>‹</button>
+            <strong>{format(pickerMonth, 'MMMM yyyy')}</strong>
+            <button className="doff-nav" onClick={() => setPickerMonth(addMonths(pickerMonth, 1))}>›</button>
           </div>
-        )}
-      </div>
+          <div className="doff-cal">
+            {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} className="doff-dow">{d}</div>)}
+            {Array.from({ length: blanks }).map((_,i) => <div key={'b'+i} />)}
+            {monthDays.map(d => {
+              const key = format(d, 'yyyy-MM-dd');
+              const isPast = isBefore(d, today);
+              const isOff = blockedDates.has(key);
+              const isToday = key === format(today, 'yyyy-MM-dd');
+              return (
+                <div key={key}
+                  className={'doff-day' + (isPast ? ' past' : '') + (isOff ? ' blocked' : ' avail') + (isToday ? ' today' : '')}
+                  onClick={() => !isPast && toggleDay(d)}>
+                  <span>{format(d, 'd')}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="doff-legend">
+            <span><i className="lg-off"></i> Blocked</span>
+            <span><i className="lg-today"></i> Today</span>
+            <span className="muted">Tap a date to toggle</span>
+          </div>
+        </div>
 
-      <div className="tbl-wrap">
-        <table>
-          <thead><tr><th>Date</th><th>Reason</th><th></th></tr></thead>
-          <tbody>
-            {days.map(d => (
-              <tr key={d.id}>
-                <td>{d.off_date}</td>
-                <td>
-                  {editingReason === d.id ? (
-                    <div style={{display:'flex',gap:6}}>
-                      <input className="fld" style={{flex:1}} placeholder="Reason" autoFocus
-                        value={reasonDraft}
-                        onChange={e => setReasonDraft(e.target.value)}
-                        onKeyDown={e => { if(e.key==='Enter') saveReason(d.id); if(e.key==='Escape') setEditingReason(null); }} />
-                      <button className="mini ok" onClick={() => saveReason(d.id)}>Save</button>
-                    </div>
-                  ) : (
-                    <span className="reason-cell" onClick={() => { setEditingReason(d.id); setReasonDraft(d.reason||''); }}>
-                      {d.reason || <span className="muted">Add reason…</span>}
-                      <svg className="pencil" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                      </svg>
-                    </span>
-                  )}
-                </td>
-                <td><span className="row-act" onClick={() => del(d.id)}>Remove</span></td>
-              </tr>
-            ))}
-            {!days.length && <tr><td colSpan={3} className="muted">No days off yet.</td></tr>}
-          </tbody>
-        </table>
+        <div className="doff-side">
+          <div className="doff-side-head">Blocked days</div>
+          {days.length ? (
+            <div className="doff-chips">
+              {days.map(d => (
+                <div className="doff-chip" key={d.id}>
+                  <div className="doff-chip-main">
+                    <span className="doff-chip-date">{format(parseISO(d.off_date), 'EEE, MMM d')}</span>
+                    {editingReason === d.id ? (
+                      <div className="doff-chip-edit">
+                        <input className="fld" placeholder="Reason (optional)" autoFocus
+                          value={reasonDraft}
+                          onChange={e => setReasonDraft(e.target.value)}
+                          onKeyDown={e => { if(e.key==='Enter') saveReason(d.id); if(e.key==='Escape') setEditingReason(null); }} />
+                        <button className="mini ok" onClick={() => saveReason(d.id)}>Save</button>
+                      </div>
+                    ) : (
+                      <span className="doff-chip-reason" onClick={() => { setEditingReason(d.id); setReasonDraft(d.reason||''); }}>
+                        {d.reason ? d.reason : <span className="muted">add reason</span>}
+                        <svg className="pencil" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                      </span>
+                    )}
+                  </div>
+                  <button className="doff-chip-x" onClick={() => del(d.id)} aria-label="Remove">×</button>
+                </div>
+              ))}
+            </div>
+          ) : <p className="muted" style={{marginTop:12}}>No days blocked yet.</p>}
+        </div>
       </div>
     </div>
   );
@@ -512,7 +508,8 @@ function DaysOff({ supabase }) {
 /* ================= REELS (upload video/thumbnail OR paste link) ================= */
 function Reels({ supabase }) {
   const [rows, setRows] = useState([]);
-  const [form, setForm] = useState({ client_name: '', service: 'Bridal', look: '', video_url: '' });
+  const [services, setServices] = useState([]);
+  const [form, setForm] = useState({ client_name: '', service: '', look: '', video_url: '' });
   const [videoFile, setVideoFile] = useState(null);
   const [thumbFile, setThumbFile] = useState(null);
   const [mode, setMode] = useState('upload'); // 'upload' | 'link'
@@ -525,7 +522,15 @@ function Reels({ supabase }) {
   const [editBusy, setEditBusy] = useState(false);
 
   const load = () => supabase.from('reels').select('*').order('sort_order').then(({ data }) => setRows(data || []));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Pull the real services Cass has added, so the dropdown matches her offerings
+    supabase.from('services').select('name').order('sort_order').then(({ data }) => {
+      const names = (data || []).map(s => s.name);
+      setServices(names);
+      setForm(f => ({ ...f, service: f.service || names[0] || '' }));
+    });
+  }, []);
 
   async function uploadTo(bucketPath, file) {
     const ext = file.name.split('.').pop();
@@ -561,7 +566,7 @@ function Reels({ supabase }) {
         sort_order: rows.length + 1, published: true,
       });
 
-      setForm({ client_name: '', service: 'Bridal', look: '', video_url: '' });
+      setForm({ client_name: '', service: services[0] || '', look: '', video_url: '' });
       setVideoFile(null); setThumbFile(null); setProgress('');
       load();
     } catch (e) {
@@ -572,7 +577,7 @@ function Reels({ supabase }) {
   }
   function startEdit(r) {
     setEditId(r.id);
-    setEditForm({ client_name: r.client_name || '', service: r.service || 'Bridal', look: r.look || '', video_url: r.video_url || '' });
+    setEditForm({ client_name: r.client_name || '', service: r.service || services[0] || '', look: r.look || '', video_url: r.video_url || '' });
     setEditVideo(null); setEditThumb(null);
   }
   function cancelEdit() { setEditId(null); setEditForm({}); setEditVideo(null); setEditThumb(null); }
@@ -602,7 +607,7 @@ function Reels({ supabase }) {
         <div className="reel-form-row">
           <input className="fld" placeholder="Client name *" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} />
           <select className="fld" value={form.service} onChange={e => setForm({ ...form, service: e.target.value })}>
-            <option>Bridal</option><option>Special Occasion</option><option>Photoshoot</option><option>Glam Class</option>
+            {services.map(sv => <option key={sv} value={sv}>{sv}</option>)}
           </select>
           <input className="fld" placeholder="Look (e.g. Soft glam)" value={form.look} onChange={e => setForm({ ...form, look: e.target.value })} />
         </div>
@@ -639,7 +644,7 @@ function Reels({ supabase }) {
                 <div className="reel-edit-row">
                   <input className="fld" placeholder="Client name" value={editForm.client_name} onChange={e => setEditForm({ ...editForm, client_name: e.target.value })} />
                   <select className="fld" value={editForm.service} onChange={e => setEditForm({ ...editForm, service: e.target.value })}>
-                    <option>Bridal</option><option>Special Occasion</option><option>Photoshoot</option><option>Glam Class</option>
+                    {services.map(sv => <option key={sv} value={sv}>{sv}</option>)}
                   </select>
                 </div>
                 <input className="fld" placeholder="Look" value={editForm.look} onChange={e => setEditForm({ ...editForm, look: e.target.value })} />

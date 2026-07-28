@@ -312,7 +312,7 @@ function ServicesPage({ services, go }){
             <div className="svc-card rise in" key={s.id}>
               <img className="ico" src="/glam-round.png" alt="" />
               <h4 className="gold-text">{s.name}</h4>
-              <div className="price">from €{Number(s.price).toFixed(0)}</div>
+              <div className="price">from ${Number(s.price).toFixed(0)}</div>
               <p>{s.description}</p>
             </div>
           ))}
