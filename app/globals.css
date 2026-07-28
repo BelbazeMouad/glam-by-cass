@@ -507,36 +507,8 @@
 .msg-actions{display:flex;gap:6px;align-items:center}
 
 /* ============ COMPACT BOOKING PAGE (fit one screen) ============ */
-/* ===== Desktop: tighter top spacing on all subpages so the header
-   doesn't push content down into a scroll ===== */
-@media(min-width:761px){
-  #page-about .wrap, #page-services .wrap, #page-portfolio .wrap{
-    padding-top:80px!important;padding-bottom:28px!important;
-  }
-  #page-about .sec-head, #page-services .sec-head, #page-portfolio .sec-head{margin-bottom:20px}
-  /* keep lighter pages centered but never taller than the screen */
-  #page-services, #page-portfolio, #page-about{min-height:100vh}
-}
-
 #page-book .wrap{padding-top:84px;padding-bottom:24px}
 #page-contact .wrap{padding-top:74px!important;padding-bottom:30px!important}
-
-/* ===== Desktop: fit booking page in one screen (no page scroll) ===== */
-@media(min-width:761px){
-  #page-book{min-height:100vh;height:100vh;overflow:hidden}
-  #page-book .wrap{padding-top:78px;padding-bottom:18px;display:flex;flex-direction:column;height:100vh;max-width:1240px}
-  #page-book .sec-head{margin-bottom:12px;flex-shrink:0}
-  #page-book .book-grid{flex:1;min-height:0;grid-template-columns:0.85fr 1.15fr;gap:28px;align-items:stretch}
-  /* services column: bigger, fills height, own scroll only if truly needed */
-  #page-book .svc{display:flex;flex-direction:column;overflow:auto}
-  #page-book .svc-row{padding:18px 22px}
-  #page-book .svc-row h4{font-size:1.28rem}
-  #page-book .svc-row .sub{font-size:.84rem}
-  #page-book .svc-row .price{font-size:1.25rem}
-  /* calendar column: fills height, scrolls internally if the form is long */
-  #page-book .booking{display:flex;flex-direction:column;overflow:auto;padding:22px 24px}
-  #page-book .booking h3{font-size:1.35rem}
-}
 #page-contact .sec-head{margin-bottom:22px}
 #page-book .sec-head{margin-bottom:16px}
 #page-book .sec-head h2{font-size:clamp(1.6rem,3.6vw,2.4rem)}
@@ -827,3 +799,84 @@ a.ci-row:hover .v{filter:brightness(1.15)}
 /* keep page content from hiding behind the fixed footer */
 .page:not(#page-home) .wrap{padding-bottom:74px}
 .home-copyright{margin-top:28px;font-size:.72rem;letter-spacing:.08em;color:var(--ink-soft);opacity:.7}
+
+/* ============================================================
+   BOOKING PAGE — refined luxury redesign (desktop only)
+   ============================================================ */
+@media(min-width:761px){
+  /* generous, balanced two-column layout */
+  #page-book .book-grid{grid-template-columns:0.9fr 1.1fr;gap:36px;align-items:start;max-width:1160px;margin:0 auto}
+
+  /* ---- SERVICES: elegant selectable list ---- */
+  #page-book .svc{
+    background:linear-gradient(180deg,rgba(224,169,74,.04),transparent 40%),var(--glass);
+    border:1px solid var(--glass-brd);border-radius:20px;overflow:hidden;
+    box-shadow:0 20px 50px -30px rgba(0,0,0,.7)}
+  #page-book .svc-row{
+    padding:22px 26px;position:relative;transition:.3s var(--ease);
+    border-bottom:1px solid var(--line)}
+  #page-book .svc-row::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:0;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+    transition:width .3s var(--ease)}
+  #page-book .svc-row:hover{background:rgba(224,169,74,.05)}
+  #page-book .svc-row.active{background:rgba(224,169,74,.08);box-shadow:none}
+  #page-book .svc-row.active::before{width:4px}
+  #page-book .svc-row h4{font-size:1.32rem;letter-spacing:.01em;transition:.3s}
+  #page-book .svc-row.active h4{color:var(--gold)}
+  #page-book .svc-row .sub{font-size:.84rem;line-height:1.5;margin-top:4px;max-width:34ch}
+  #page-book .svc-row .price{
+    font-size:1.45rem;background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  /* little checkmark when a service is chosen */
+  #page-book .svc-row.active::after{
+    content:'✓';position:absolute;top:16px;right:22px;width:22px;height:22px;
+    display:flex;align-items:center;justify-content:center;border-radius:50%;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+    color:#160c05;font-size:.72rem;font-weight:700;animation:sentPop .3s var(--ease)}
+
+  /* ---- BOOKING PANEL: refined card ---- */
+  #page-book .booking{
+    border-radius:20px;padding:32px 30px;
+    background:linear-gradient(180deg,rgba(224,169,74,.05),transparent 30%),var(--glass);
+    border:1px solid var(--glass-brd);box-shadow:0 20px 50px -30px rgba(0,0,0,.7)}
+  #page-book .booking h3{font-size:1.65rem}
+
+  /* calendar — softer, more tactile days */
+  #page-book .cal{gap:6px;margin-bottom:26px}
+  #page-book .cal .day{
+    border-radius:10px;font-size:.86rem;font-weight:500;
+    transition:.2s var(--ease);border:1px solid transparent}
+  #page-book .cal .day.avail:hover{
+    border-color:var(--gold);background:rgba(224,169,74,.1);
+    transform:translateY(-2px);box-shadow:0 6px 14px -6px rgba(224,169,74,.5)}
+  #page-book .cal .day.sel{
+    box-shadow:0 8px 20px -6px rgba(224,169,74,.6);transform:translateY(-1px)}
+
+  /* time slots — pill style, clearer selection */
+  #page-book .slots{gap:10px;margin-bottom:24px}
+  #page-book .slot{
+    padding:11px 20px;border-radius:100px;font-size:.85rem;font-weight:500;
+    border:1px solid var(--glass-brd);transition:.22s var(--ease)}
+  #page-book .slot:hover{border-color:var(--gold);transform:translateY(-2px)}
+  #page-book .slot.sel{
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+    color:#160c05;border-color:transparent;box-shadow:0 8px 18px -6px rgba(224,169,74,.5)}
+
+  /* deposit note — elegant highlight */
+  #page-book .pay-note{
+    border-radius:14px;padding:16px 18px;font-size:.86rem;line-height:1.55;
+    background:linear-gradient(180deg,rgba(165,40,61,.08),rgba(165,40,61,.03));
+    border:1px solid rgba(165,40,61,.25);margin-bottom:22px}
+  #page-book .pay-note strong{color:var(--gold)}
+
+  /* form fields a touch airier */
+  #page-book .form-mini input{padding:13px 16px;border-radius:12px;font-size:.92rem}
+
+  /* main CTA button — richer */
+  #page-book .booking > .btn:last-of-type,#page-book .booking .btn{border-radius:12px}
+
+  /* payment method chips — subtle */
+  #page-book .pm-row{margin-top:16px;opacity:.85}
+  #page-book .pm{border-radius:8px;padding:7px 12px}
+}
