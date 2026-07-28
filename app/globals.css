@@ -785,3 +785,6 @@ a.ci-row:hover .v{filter:brightness(1.15)}
 .fe-inline{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 .fe-inline .fe-row{margin-top:4px}
 .fe-inline .mail-flash{display:inline-block;margin-top:8px}
+
+/* mobile-only up-arrow button — hidden on desktop; shown via mobile.css under 760px */
+.m-upbtn{display:none}
