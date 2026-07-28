@@ -61,9 +61,11 @@ export async function POST(req) {
     }
 
     // Notify Cass
-    let ownerEmail = process.env.OWNER_EMAIL;
-    const { data: s } = await admin.from('settings').select('email').eq('id', 1).single();
-    if (s?.email) ownerEmail = s.email;
+    let ownerEmail = process.env.OWNER_EMAIL?.trim();
+    if (!ownerEmail) {
+      const { data: s } = await admin.from('settings').select('email').eq('id', 1).single();
+      ownerEmail = s?.email?.trim();
+    }
     if (ownerEmail) {
       const ot = await buildTemplate('ownerCancelled', vars);
       await sendEmail({ to: ownerEmail, ...ot });

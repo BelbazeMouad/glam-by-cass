@@ -49,9 +49,11 @@ export async function POST(req) {
 
         // Cass: new booking alert. Uses the email set in Contact Info,
         // or OWNER_EMAIL as a fallback.
-        let ownerEmail = process.env.OWNER_EMAIL;
-        const { data: s } = await admin.from('settings').select('email').eq('id', 1).single();
-        if (s?.email) ownerEmail = s.email;
+        let ownerEmail = process.env.OWNER_EMAIL?.trim();
+        if (!ownerEmail) {
+          const { data: s } = await admin.from('settings').select('email').eq('id', 1).single();
+          ownerEmail = s?.email?.trim();
+        }
         if (ownerEmail) {
           const ot = await buildTemplate('ownerNewBooking', vars);
           await sendEmail({ to: ownerEmail, ...ot });
