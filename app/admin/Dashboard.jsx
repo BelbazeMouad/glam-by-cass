@@ -196,6 +196,7 @@ function Overview({ supabase }) {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bookings.map(b => ({
       Client: b.client_name, Email: b.client_email, Phone: b.client_phone, Service: b.service_name,
       Date: b.booking_date, Time: b.booking_time, Deposit: b.deposit_amount, Paid: b.paid ? 'Yes' : 'No', Status: b.status,
+      Archived: b.archived ? 'Yes' : 'No',
     }))), 'Bookings');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(services.map(s => ({
       Service: s.name, Price: s.price, Deposit: s.deposit, Minutes: s.duration_min, Active: s.active ? 'Yes' : 'No',
@@ -295,6 +296,8 @@ function Bookings({ supabase }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('newest');     // newest | oldest | soonest | latest
+  const [view, setView] = useState('active');     // active | archive
   const [msgFor, setMsgFor] = useState(null);   // booking object the popup is open for
   const [msgBody, setMsgBody] = useState('');
   const [msgSending, setMsgSending] = useState(false);
@@ -308,6 +311,17 @@ function Bookings({ supabase }) {
     setBusy(id);
     await fetch('/api/booking-action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId: id, action }) });
     setBusy(null); load();
+  }
+
+  // Archive hides a booking from the main list without deleting it.
+  async function setArchived(id, value) {
+    setBusy(id);
+    const { error } = await supabase.from('bookings')
+      .update({ archived: value, archived_at: value ? new Date().toISOString() : null })
+      .eq('id', id);
+    setBusy(null);
+    if (error) { alert('Could not update: ' + error.message); return; }
+    load();
   }
 
   function waLink(b) {
@@ -345,11 +359,24 @@ function Bookings({ supabase }) {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(b => ({
       Client: b.client_name, Email: b.client_email, Phone: b.client_phone, Service: b.service_name,
       Date: b.booking_date, Time: b.booking_time, Deposit: b.deposit_amount, Paid: b.paid ? 'Yes' : 'No', Status: b.status,
+      Archived: b.archived ? 'Yes' : 'No',
     }))), 'Bookings');
     XLSX.writeFile(wb, 'glam-bookings.xlsx');
   }
 
-  const shown = filter === 'all' ? rows : rows.filter(b => b.status === filter);
+  const SORTS = {
+    newest:  { label: 'Newest added',   fn: (a,b) => new Date(b.created_at||0) - new Date(a.created_at||0) },
+    oldest:  { label: 'Oldest added',   fn: (a,b) => new Date(a.created_at||0) - new Date(b.created_at||0) },
+    soonest: { label: 'Date: soonest',  fn: (a,b) => String(a.booking_date||'').localeCompare(String(b.booking_date||'')) },
+    latest:  { label: 'Date: latest',   fn: (a,b) => String(b.booking_date||'').localeCompare(String(a.booking_date||'')) },
+  };
+
+  const archivedCount = rows.filter(b => b.archived).length;
+
+  const shown = rows
+    .filter(b => (view === 'archive' ? b.archived : !b.archived))
+    .filter(b => filter === 'all' || b.status === filter)
+    .sort(SORTS[sort]?.fn || SORTS.newest.fn);
 
   return (
     <div>
@@ -357,11 +384,33 @@ function Bookings({ supabase }) {
         <h3>Bookings</h3>
         <button className="btn ghost" onClick={exportXlsx}>⬇ Export Excel</button>
       </div>
-      <div className="chips">
-        {['all', 'pending', 'confirmed', 'cancelled'].map(f => (
-          <button key={f} className={'chip' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>{f}</button>
-        ))}
+      <div className="bk-toolbar">
+        <div className="bk-views">
+          <button className={'chip' + (view === 'active' ? ' on' : '')} onClick={() => setView('active')}>
+            Active
+          </button>
+          <button className={'chip' + (view === 'archive' ? ' on' : '')} onClick={() => setView('archive')}>
+            Archive{archivedCount ? ` (${archivedCount})` : ''}
+          </button>
+        </div>
+
+        <div className="chips">
+          {['all', 'pending', 'confirmed', 'cancelled'].map(f => (
+            <button key={f} className={'chip' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>{f}</button>
+          ))}
+        </div>
+
+        <label className="bk-sort">
+          <span className="muted">Sort</span>
+          <select className="fld" value={sort} onChange={e => setSort(e.target.value)}>
+            {Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </label>
       </div>
+
+      {view === 'archive' && (
+        <p className="muted bk-archive-note">These are tucked away. Nothing has been deleted — restore any of them with ↩.</p>
+      )}
       <div className="tbl-wrap">
         <table>
           <thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Deposit</th><th>Status</th><th>Actions</th></tr></thead>
@@ -383,11 +432,18 @@ function Bookings({ supabase }) {
                       ? <a className="mini wa" href={waLink(b)} target="_blank" rel="noreferrer">WhatsApp</a>
                       : <span className="mini wa disabled" title="No phone number on file">WhatsApp</span>}
                     <button className="mini email-btn" onClick={() => openMessage(b)}>Email</button>
+                    {view === 'archive'
+                      ? <button className="mini bk-restore" disabled={busy === b.id}
+                          title="Put back in the active list"
+                          onClick={() => setArchived(b.id, false)}>↩ Restore</button>
+                      : <button className="bk-archive-x" disabled={busy === b.id}
+                          title="Archive — hides it here, keeps it saved"
+                          onClick={() => setArchived(b.id, true)}>×</button>}
                   </div>
                 </td>
               </tr>
             ))}
-            {!shown.length && <tr><td colSpan={6} className="muted">No bookings.</td></tr>}
+            {!shown.length && <tr><td colSpan={6} className="muted">{view === 'archive' ? 'Nothing archived yet.' : 'No bookings.'}</td></tr>}
           </tbody>
         </table>
       </div>
