@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase';
+import { isTimeBookable } from '@/lib/booking-times';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -37,11 +38,29 @@ export async function POST(req) {
     const price = Number(service.price) || 0;
     const balance = Math.max(price - deposit, 0);
 
-    // Guard: is the date already unavailable?
-    const { data: taken } = await admin
-      .from('public_unavailable_dates').select('date').eq('date', date);
-    if (taken && taken.length > 0) {
-      return Response.json({ error: 'That date is no longer available' }, { status: 409 });
+    // Guard 1: has Cass blocked this whole day off?
+    const { data: dayOff } = await admin
+      .from('days_off').select('off_date').eq('off_date', date);
+    if (dayOff && dayOff.length > 0) {
+      return Response.json({ error: 'That date is no longer available.' }, { status: 409 });
+    }
+
+    // Guard 2: is this TIME free? Re-checked here on the server so two people
+    // clicking at the same moment can't both grab the same slot.
+    const { data: sameDay } = await admin
+      .from('bookings')
+      .select('booking_time, status, paid')
+      .eq('booking_date', date)
+      .neq('status', 'cancelled');
+
+    const takenTimes = (sameDay || [])
+      .filter(b => b.paid || b.status === 'pending')
+      .map(b => b.booking_time)
+      .filter(Boolean);
+
+    const timeCheck = isTimeBookable(time, takenTimes);
+    if (!timeCheck.ok) {
+      return Response.json({ error: timeCheck.reason }, { status: 409 });
     }
 
     // Create a pending booking first.
