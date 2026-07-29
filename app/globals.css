@@ -983,10 +983,19 @@ a.ci-row:hover .v{filter:brightness(1.15)}
 .time-pill{padding:11px 8px;border-radius:11px;font-size:.86rem;font-weight:500;cursor:pointer;
   background:var(--glass);border:1px solid var(--glass-brd);color:var(--ink);
   transition:.2s var(--ease);font-family:var(--f-body);text-align:center;position:relative}
-.time-pill:hover:not(:disabled){border-color:var(--gold);color:var(--gold);
-  transform:translateY(-2px);box-shadow:0 6px 14px -6px rgba(224,169,74,.45)}
-.time-pill.sel{background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
-  color:#160c05;border-color:transparent;font-weight:700;
+/* hover only on devices with a real pointer — on touch screens :hover
+   sticks after a tap and would override the selected state's dark text */
+@media (hover: hover) and (pointer: fine) {
+  .time-pill:hover:not(:disabled):not(.sel){border-color:var(--gold);color:var(--gold);
+    transform:translateY(-2px);box-shadow:0 6px 14px -6px rgba(224,169,74,.45)}
+}
+.time-pill.sel,
+.time-pill.sel:hover,
+.time-pill.sel:focus,
+.time-pill.sel:active{
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+  color:#160c05!important;-webkit-text-fill-color:#160c05;
+  border-color:transparent;font-weight:700;
   box-shadow:0 8px 18px -6px rgba(224,169,74,.55)}
 .time-pill.taken{opacity:.4;cursor:not-allowed;text-decoration:line-through;
   background:var(--surface);color:var(--ink-soft)}
@@ -1002,3 +1011,48 @@ a.ci-row:hover .v{filter:brightness(1.15)}
   .time-scroll{max-height:200px}
   .step-label{font-size:.9rem;margin:18px 0 10px}
 }
+
+/* ============================================================
+   SELECT DROPDOWNS — native <option> lists fall back to the OS
+   default (white on white in dark mode), so set them explicitly.
+   ============================================================ */
+select.fld,
+.dash-shell select,
+.reel-form-row select,
+.reel-edit-row select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background-color:var(--surface);
+  color:var(--ink);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding-right:38px;
+  cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),
+                   linear-gradient(135deg,var(--gold) 50%,transparent 50%);
+  background-position:calc(100% - 19px) calc(50% + 2px),calc(100% - 14px) calc(50% + 2px);
+  background-size:5px 5px,5px 5px;
+  background-repeat:no-repeat;
+  transition:.2s var(--ease);
+}
+select.fld:hover,
+.dash-shell select:hover{border-color:var(--gold)}
+select.fld:focus,
+.dash-shell select:focus{outline:none;border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(224,169,74,.15)}
+
+/* the actual dropdown list items */
+select.fld option,
+.dash-shell select option{
+  background-color:#140d0c;
+  color:#e9e2d2;
+  padding:10px;
+}
+select.fld option:checked,
+.dash-shell select option:checked{
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));
+  color:#160c05;
+  font-weight:600;
+}
+/* light theme keeps readable contrast */
+[data-theme="light"] select.fld option,
+[data-theme="light"] .dash-shell select option{background-color:#fff;color:#2a2118}
