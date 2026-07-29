@@ -14,6 +14,7 @@ const TABS = [
   ['reels','Reels','▶'],
   ['messages','Messages','✉'],
   ['emails','Emails','✎'],
+  ['about','About Page','❋'],
   ['settings','Contact Info','⚙'],
 ];
 
@@ -87,6 +88,7 @@ export default function Dashboard({ supabase, onSignOut }) {
           {tab === 'reels'    && <Reels    supabase={supabase} />}
           {tab === 'messages' && <Messages supabase={supabase} msgs={msgs} onOpen={openMessage} onDelete={del} />}
           {tab === 'emails'   && <Emails   supabase={supabase} />}
+          {tab === 'about'    && <AboutEditor supabase={supabase} />}
           {tab === 'settings' && <Settings supabase={supabase} />}
         </div>
       </div>
@@ -1080,3 +1082,158 @@ const TAG_LABELS = {
   name: 'Client name', service: 'Service', date: 'Date', time: 'Time',
   deposit: 'Deposit', email: 'Client email', phone: 'Client phone', reply: 'Your reply',
 };
+
+/* ================= ABOUT PAGE EDITOR ================= */
+const ABOUT_DEFAULTS = {
+  eyebrow:'The Artist',
+  heading:'About Cass',
+  tagline:"It's not just makeup. It's a whole experience.",
+  p1:'Cass is a Los Angeles-based makeup artist specialising in bridal, editorial and special-occasion glam. Every look is built around the person wearing it — enhancing natural features, never masking them.',
+  p2:'From intimate one-on-one glam classes to full bridal parties and on-set editorial work, the goal is always the same: to help you feel luminous, confident, and entirely yourself.',
+  image_url:'',
+  stat1_num:'320+', stat1_label:'Clients',
+  stat2_num:'5★',   stat2_label:'Rated',
+  stat3_num:'2021', stat3_label:'Since',
+  cta:'Book a Session',
+};
+
+function AboutEditor({ supabase }) {
+  const [a, setA] = useState(ABOUT_DEFAULTS);
+  const [busy, setBusy] = useState(false);
+  const [flash, setFlash] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const set = (k, v) => setA(prev => ({ ...prev, [k]: v }));
+
+  useEffect(() => {
+    supabase.from('settings').select('about').eq('id', 1).single()
+      .then(({ data }) => { if (data?.about) setA({ ...ABOUT_DEFAULTS, ...data.about }); });
+  }, []);
+
+  async function save() {
+    setBusy(true); setFlash('');
+    const { error } = await supabase.from('settings')
+      .update({ about: a, updated_at: new Date().toISOString() }).eq('id', 1);
+    setBusy(false);
+    if (error) { setFlash('Could not save: ' + (error.message || 'unknown error')); setTimeout(()=>setFlash(''), 6000); return; }
+    setFlash('Saved ✓'); setTimeout(() => setFlash(''), 2500);
+  }
+
+  async function resetAll() {
+    if (!confirm('Reset the About page back to the original wording?')) return;
+    setA(ABOUT_DEFAULTS);
+    setFlash('Reset — remember to press Save'); setTimeout(() => setFlash(''), 4000);
+  }
+
+  async function uploadPhoto(file) {
+    if (!file) return;
+    setUploading(true); setFlash('');
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `about-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('reels').upload(path, file, { cacheControl: '3600', upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from('reels').getPublicUrl(path);
+      set('image_url', data.publicUrl);
+      setFlash('Photo uploaded — press Save to publish it');
+      setTimeout(() => setFlash(''), 5000);
+    } catch (e) {
+      setFlash('Upload failed: ' + (e.message || e));
+      setTimeout(() => setFlash(''), 6000);
+    } finally { setUploading(false); }
+  }
+
+  const stats = [
+    ['stat1_num','stat1_label'],
+    ['stat2_num','stat2_label'],
+    ['stat3_num','stat3_label'],
+  ];
+
+  return (
+    <div>
+      <div className="panel-head">
+        <h3>About Page</h3>
+        {flash && <span className="mail-flash">{flash}</span>}
+      </div>
+      <p className="muted">Everything clients read on your About page. Leave a field empty to hide it.</p>
+
+      <div className="about-ed-grid">
+        {/* ---- editor ---- */}
+        <div className="about-ed-fields">
+          <label className="mail-label">Small label above the title</label>
+          <input className="fld" value={a.eyebrow} onChange={e => set('eyebrow', e.target.value)} placeholder="The Artist" />
+
+          <label className="mail-label">Page title</label>
+          <input className="fld" value={a.heading} onChange={e => set('heading', e.target.value)} placeholder="About Cass" />
+
+          <label className="mail-label">Tagline (the gold line)</label>
+          <input className="fld" value={a.tagline} onChange={e => set('tagline', e.target.value)} placeholder="It's not just makeup…" />
+
+          <label className="mail-label">First paragraph</label>
+          <textarea className="fld about-ta" rows={4} value={a.p1} onChange={e => set('p1', e.target.value)} />
+
+          <label className="mail-label">Second paragraph</label>
+          <textarea className="fld about-ta" rows={4} value={a.p2} onChange={e => set('p2', e.target.value)} />
+
+          <label className="mail-label">Your photo</label>
+          <div className="about-photo-row">
+            {a.image_url
+              ? <img className="about-photo-thumb" src={a.image_url} alt="" />
+              : <div className="about-photo-thumb empty">Logo<br/>shown</div>}
+            <div className="about-photo-actions">
+              <label className="drop small">
+                <input type="file" accept="image/*" hidden disabled={uploading}
+                  onChange={e => uploadPhoto(e.target.files[0])} />
+                <span className="drop-ico">🖼</span>
+                <span>{uploading ? 'Uploading…' : a.image_url ? 'Replace photo' : 'Upload a photo'}</span>
+              </label>
+              {a.image_url && <button className="mini no" onClick={() => set('image_url','')}>Use logo instead</button>}
+            </div>
+          </div>
+
+          <label className="mail-label">The three highlights</label>
+          <div className="about-stats-ed">
+            {stats.map(([numKey, labelKey], i) => (
+              <div className="about-stat-ed" key={i}>
+                <input className="fld" value={a[numKey]} onChange={e => set(numKey, e.target.value)} placeholder="320+" />
+                <input className="fld" value={a[labelKey]} onChange={e => set(labelKey, e.target.value)} placeholder="Clients" />
+              </div>
+            ))}
+          </div>
+
+          <label className="mail-label">Button text</label>
+          <input className="fld" value={a.cta} onChange={e => set('cta', e.target.value)} placeholder="Book a Session" />
+
+          <div className="mail-actions">
+            <button className="btn" onClick={save} disabled={busy || uploading}>{busy ? 'Saving…' : 'Save changes'}</button>
+            <button className="btn ghost" onClick={resetAll} disabled={busy}>Reset to original</button>
+          </div>
+        </div>
+
+        {/* ---- live preview ---- */}
+        <div className="about-ed-preview-wrap">
+          <label className="mail-label">Preview</label>
+          <div className="about-ed-preview">
+            {a.eyebrow && <div className="ap-eyebrow">{a.eyebrow}</div>}
+            <div className="ap-heading">{a.heading}</div>
+            <div className="ap-media">
+              {a.image_url
+                ? <img src={a.image_url} alt="" />
+                : <div className="ap-logo">your logo</div>}
+            </div>
+            {a.tagline && <div className="ap-tagline">{a.tagline}</div>}
+            {a.p1 && <p className="ap-p">{a.p1}</p>}
+            {a.p2 && <p className="ap-p">{a.p2}</p>}
+            <div className="ap-stats">
+              {stats.map(([n,l], i) => (a[n] || a[l]) ? (
+                <div key={i}><div className="ap-n">{a[n]}</div><div className="ap-l">{a[l]}</div></div>
+              ) : null)}
+            </div>
+            {a.cta && <div className="ap-cta">{a.cta}</div>}
+          </div>
+          <p className="muted mail-hint">This is roughly how your About page will look.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

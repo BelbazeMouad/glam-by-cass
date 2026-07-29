@@ -57,7 +57,7 @@ export default function Home() {
       </nav>
 
       {page==='home' && <HomePager go={go} reels={reels} openLb={setLb} />}
-      {page==='about' && <AboutPage go={go} />}
+      {page==='about' && <AboutPage go={go} settings={settings} />}
       {page==='services' && <ServicesPage services={services} go={go} />}
       {page==='portfolio' && <PortfolioPage reels={reels} openLb={setLb} />}
       {page==='book' && <BookPage />}
@@ -278,23 +278,55 @@ function Coverflow({ reels, openLb, active }){
 }
 
 /* ================= SUBPAGES ================= */
-function AboutPage({ go }){
+// Falls back to the original wording if nothing is saved yet,
+// so the page never renders empty.
+const ABOUT_FALLBACK = {
+  eyebrow:'The Artist',
+  heading:'About Cass',
+  tagline:"It's not just makeup. It's a whole experience.",
+  p1:'Cass is a Los Angeles-based makeup artist specialising in bridal, editorial and special-occasion glam. Every look is built around the person wearing it \u2014 enhancing natural features, never masking them.',
+  p2:'From intimate one-on-one glam classes to full bridal parties and on-set editorial work, the goal is always the same: to help you feel luminous, confident, and entirely yourself.',
+  image_url:'',
+  stat1_num:'320+', stat1_label:'Clients',
+  stat2_num:'5\u2605', stat2_label:'Rated',
+  stat3_num:'2021',  stat3_label:'Since',
+  cta:'Book a Session',
+};
+
+function AboutPage({ go, settings }){
+  const a = { ...ABOUT_FALLBACK, ...(settings?.about || {}) };
+  const stats = [
+    [a.stat1_num, a.stat1_label],
+    [a.stat2_num, a.stat2_label],
+    [a.stat3_num, a.stat3_label],
+  ].filter(([n,l]) => (n && String(n).trim()) || (l && String(l).trim()));
+
   return (
     <div className="page on" id="page-about">
       <div className="wrap" style={{paddingTop:96,paddingBottom:50}}>
-        <div className="sec-head"><div className="eyebrow rise in">The Artist</div><h2 className="gold-text rise in d1">About Cass</h2><div className="orn rise in d2"><i></i></div></div>
+        <div className="sec-head">
+          {a.eyebrow && <div className="eyebrow rise in">{a.eyebrow}</div>}
+          <h2 className="gold-text rise in d1">{a.heading}</h2>
+          <div className="orn rise in d2"><i></i></div>
+        </div>
         <div className="about-grid">
-          <div className="framed about-emblem rise in d1"><img className="about-mark" src="/glam-logo.png" alt="Glam by Cass" /></div>
+          <div className="framed about-emblem rise in d1">
+            {a.image_url
+              ? <img className="about-photo" src={a.image_url} alt={a.heading || 'Glam by Cass'} />
+              : <img className="about-mark" src="/glam-logo.png" alt="Glam by Cass" />}
+          </div>
           <div className="about-text rise in d2">
-            <h3 className="gold-text">It's not just makeup. It's a whole experience.</h3>
-            <p>Cass is a Los Angeles-based makeup artist specialising in bridal, editorial and special-occasion glam. Every look is built around the person wearing it — enhancing natural features, never masking them.</p>
-            <p>From intimate one-on-one glam classes to full bridal parties and on-set editorial work, the goal is always the same: to help you feel luminous, confident, and entirely yourself.</p>
-            <div className="about-stats">
-              <div><div className="n gold-text">320+</div><div className="l">Clients</div></div>
-              <div><div className="n gold-text">5★</div><div className="l">Rated</div></div>
-              <div><div className="n gold-text">2021</div><div className="l">Since</div></div>
-            </div>
-            <div style={{marginTop:30}}><a onClick={()=>go('book')} className="btn" style={{cursor:'pointer'}}>Book a Session</a></div>
+            {a.tagline && <h3 className="gold-text">{a.tagline}</h3>}
+            {a.p1 && <p>{a.p1}</p>}
+            {a.p2 && <p>{a.p2}</p>}
+            {!!stats.length && (
+              <div className="about-stats">
+                {stats.map(([n,l],i) => (
+                  <div key={i}><div className="n gold-text">{n}</div><div className="l">{l}</div></div>
+                ))}
+              </div>
+            )}
+            {a.cta && <div style={{marginTop:30}}><a onClick={()=>go('book')} className="btn" style={{cursor:'pointer'}}>{a.cta}</a></div>}
           </div>
         </div>
       </div>
