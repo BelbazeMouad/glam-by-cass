@@ -1,9 +1,24 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function CancelPage({ searchParams }) {
-  const token = searchParams?.token || '';
-  const [state, setState] = useState('loading'); // loading | found | notfound | confirming | done | already | error
+// useSearchParams() must sit inside a Suspense boundary, so the page
+// is a thin wrapper around the real content.
+export default function CancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="cancel-wrap"><div className="cancel-card"><p className="muted">Loading…</p></div></div>
+    }>
+      <CancelInner />
+    </Suspense>
+  );
+}
+
+function CancelInner() {
+  const params = useSearchParams();
+  const token = params.get('token') || '';
+
+  const [state, setState] = useState('loading'); // loading|found|notfound|confirming|done|already|error
   const [booking, setBooking] = useState(null);
   const [err, setErr] = useState('');
 
@@ -73,7 +88,7 @@ export default function CancelPage({ searchParams }) {
               <div className="cw-ico">!</div>
               <div>
                 <strong>Your deposit is non-refundable.</strong>
-                <p>If you cancel, the €{booking.deposit_amount} deposit you paid won&apos;t be returned. Your date will be released for someone else.</p>
+                <p>If you cancel, the ${booking.deposit_amount} deposit you paid won&apos;t be returned. Your date will be released for someone else.</p>
               </div>
             </div>
 
