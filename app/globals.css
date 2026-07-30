@@ -1137,3 +1137,36 @@ select.fld option:checked,
   .bk-views .chip{flex:1}
   .bk-archive-x{width:34px;height:34px;font-size:1.3rem}
 }
+
+/* ============================================================
+   SERVICES EDITOR — hidden / unsaved flags + actions
+   ============================================================ */
+.svc-head-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+.svc-edit-card{position:relative}
+.svc-edit-card.is-hidden{opacity:.72}
+.svc-edit-card.is-hidden::after{content:'';position:absolute;inset:0;border-radius:inherit;
+  background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,.02) 10px,rgba(255,255,255,.02) 20px);
+  pointer-events:none}
+.svc-edit-card.is-dirty{border-color:rgba(224,169,74,.5)}
+
+.svc-hidden-flag,.svc-dirty-flag{display:inline-block;font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:4px 10px;border-radius:100px;margin-bottom:10px;font-weight:600}
+.svc-hidden-flag{background:var(--surface);border:1px solid var(--line);color:var(--ink-soft)}
+.svc-dirty-flag{background:rgba(224,169,74,.12);border:1px solid rgba(224,169,74,.4);color:var(--gold)}
+.svc-hidden-flag + .svc-dirty-flag{margin-left:6px}
+
+.svc-edit-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.svc-edit-actions .btn{padding:10px 18px;font-size:.84rem}
+.svc-edit-actions .btn:disabled{opacity:.45;cursor:default}
+.svc-edit-actions .mini{padding:9px 14px}
+.svc-edit-actions .mini:disabled{opacity:.45;cursor:default}
+.svc-edit-actions .mini.no{margin-left:auto}
+
+@media(max-width:760px){
+  .svc-edit-actions{gap:7px}
+  .svc-edit-actions .btn,.svc-edit-actions .mini{flex:1;min-width:78px;justify-content:center;text-align:center}
+  .svc-edit-actions .mini.no{margin-left:0}
+  .svc-head-right{width:100%}
+  .svc-head-right .btn{flex:1;justify-content:center}
+}

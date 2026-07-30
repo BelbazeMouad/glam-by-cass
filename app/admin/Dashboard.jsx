@@ -486,25 +486,112 @@ function Bookings({ supabase }) {
 /* ================= SERVICES & PRICES ================= */
 function Services({ supabase }) {
   const [rows, setRows] = useState([]);
+  const [original, setOriginal] = useState([]);   // last saved copy, for Reset
   const [saving, setSaving] = useState(null);
-  const load = () => supabase.from('services').select('*').order('sort_order').then(({ data }) => setRows(data || []));
+  const [busy, setBusy] = useState(null);
+  const [flash, setFlash] = useState('');
+
+  const load = () => supabase.from('services').select('*').order('sort_order').then(({ data }) => {
+    setRows(data || []);
+    setOriginal(JSON.parse(JSON.stringify(data || [])));
+  });
   useEffect(() => { load(); }, []);
+
+  function say(msg, ms = 3500) { setFlash(msg); setTimeout(() => setFlash(''), ms); }
+
   async function save(row) {
     setSaving(row.id);
-    await supabase.from('services').update({ name: row.name, description: row.description, price: row.price, deposit: row.deposit, duration_min: row.duration_min, active: row.active }).eq('id', row.id);
-    setSaving(null); load();
+    const { error } = await supabase.from('services').update({
+      name: row.name, description: row.description,
+      price: Number(row.price) || 0, deposit: Number(row.deposit) || 0,
+      duration_min: Number(row.duration_min) || 0, active: row.active,
+    }).eq('id', row.id);
+    setSaving(null);
+    if (error) { say('Could not save: ' + error.message, 6000); return; }
+    say('Saved ✓');
+    load();
   }
-  async function add() { await supabase.from('services').insert({ name: 'New Service', price: 0, deposit: 0, sort_order: rows.length + 1 }); load(); }
-  async function del(id) { await supabase.from('services').delete().eq('id', id); load(); }
+
+  async function add() {
+    const { error } = await supabase.from('services')
+      .insert({ name: 'New Service', price: 0, deposit: 0, sort_order: rows.length + 1, active: true });
+    if (error) { say('Could not add: ' + error.message, 6000); return; }
+    load();
+  }
+
+  // Undo unsaved edits on one card
+  function reset(id) {
+    const orig = original.find(o => o.id === id);
+    if (!orig) return;
+    setRows(rows.map(r => r.id === id ? { ...orig } : r));
+    say('Changes undone');
+  }
+
+  // Has this card been edited since it was last saved?
+  function isDirty(row) {
+    const orig = original.find(o => o.id === row.id);
+    if (!orig) return false;
+    return ['name','description','price','deposit','duration_min','active']
+      .some(k => String(orig[k] ?? '') !== String(row[k] ?? ''));
+  }
+
+  // Show/hide on the booking page — a safe alternative to deleting
+  async function toggleActive(row) {
+    setBusy(row.id);
+    const { error } = await supabase.from('services').update({ active: !row.active }).eq('id', row.id);
+    setBusy(null);
+    if (error) { say('Could not update: ' + error.message, 6000); return; }
+    say(row.active ? 'Hidden from the booking page' : 'Now showing on the booking page');
+    load();
+  }
+
+  async function del(row) {
+    setBusy(row.id);
+    // Bookings link to services, so a service that's been booked can't just
+    // be removed — that would break the booking history.
+    const { count } = await supabase
+      .from('bookings').select('id', { count: 'exact', head: true }).eq('service_id', row.id);
+
+    if (count && count > 0) {
+      const ok = confirm(
+        `"${row.name}" has ${count} booking${count === 1 ? '' : 's'}.\n\n` +
+        `Those bookings will be KEPT (the service name stays on them), but they'll no longer link to this service.\n\n` +
+        `Tip: if you just want it off the booking page, press "Hide" instead.\n\nDelete anyway?`
+      );
+      if (!ok) { setBusy(null); return; }
+
+      // Unlink first so the delete is allowed
+      const { error: unlinkErr } = await supabase.from('bookings')
+        .update({ service_id: null }).eq('service_id', row.id);
+      if (unlinkErr) { setBusy(null); say('Could not delete: ' + unlinkErr.message, 6000); return; }
+    } else {
+      if (!confirm(`Delete "${row.name}"? This can't be undone.`)) { setBusy(null); return; }
+    }
+
+    const { error } = await supabase.from('services').delete().eq('id', row.id);
+    setBusy(null);
+    if (error) { say('Could not delete: ' + error.message, 6000); return; }
+    say('Service deleted');
+    load();
+  }
+
   const upd = (id, k, v) => setRows(rows.map(r => r.id === id ? { ...r, [k]: v } : r));
 
   return (
     <div>
-      <div className="panel-head"><h3>Services &amp; Prices</h3><button className="btn" onClick={add}>+ Add Service</button></div>
-      <p className="muted">Edit prices and deposits — changes apply instantly on the booking page.</p>
+      <div className="panel-head">
+        <h3>Services &amp; Prices</h3>
+        <div className="svc-head-right">
+          {flash && <span className="mail-flash">{flash}</span>}
+          <button className="btn" onClick={add}>+ Add Service</button>
+        </div>
+      </div>
+      <p className="muted">Edit prices and deposits — changes apply instantly on the booking page. Press <strong>Save</strong> on a card to publish your edits.</p>
       <div className="svc-editor">
         {rows.map(r => (
-          <div className="svc-edit-card pop" key={r.id}>
+          <div className={'svc-edit-card pop' + (r.active === false ? ' is-hidden' : '') + (isDirty(r) ? ' is-dirty' : '')} key={r.id}>
+            {r.active === false && <div className="svc-hidden-flag">Hidden from booking page</div>}
+            {isDirty(r) && <div className="svc-dirty-flag">Unsaved changes</div>}
             <input className="fld" value={r.name} onChange={e => upd(r.id, 'name', e.target.value)} placeholder="Service name" />
             <textarea className="fld" rows={2} value={r.description || ''} onChange={e => upd(r.id, 'description', e.target.value)} placeholder="Description" />
             <div className="svc-edit-row">
@@ -513,8 +600,20 @@ function Services({ supabase }) {
               <label>Mins<input className="fld sm" type="number" value={r.duration_min} onChange={e => upd(r.id, 'duration_min', e.target.value)} /></label>
             </div>
             <div className="svc-edit-actions">
-              <button className="btn" onClick={() => save(r)}>{saving === r.id ? 'Saving…' : 'Save'}</button>
-              <button className="btn ghost" onClick={() => del(r.id)}>Delete</button>
+              <button className="btn" onClick={() => save(r)} disabled={saving === r.id || busy === r.id}>
+                {saving === r.id ? 'Saving…' : 'Save'}
+              </button>
+              <button className="btn ghost" onClick={() => reset(r.id)} disabled={!isDirty(r) || busy === r.id}
+                title={isDirty(r) ? 'Undo your unsaved changes' : 'Nothing to undo'}>
+                Reset
+              </button>
+              <button className="mini" onClick={() => toggleActive(r)} disabled={busy === r.id}
+                title={r.active === false ? 'Show it on the booking page' : 'Hide it from the booking page'}>
+                {r.active === false ? 'Show' : 'Hide'}
+              </button>
+              <button className="mini no" onClick={() => del(r)} disabled={busy === r.id}>
+                {busy === r.id ? '…' : 'Delete'}
+              </button>
             </div>
           </div>
         ))}
